@@ -94,7 +94,7 @@
      <normaloff>:/images/delete.png</normaloff>:/images/delete.png</iconset>
    </property>
   </widget>
-  <widget class="QListWidget" name="m_playlist">
+  <widget class="PlayListWidget" name="m_playlist">
    <property name="geometry">
     <rect>
      <x>40</x>
@@ -209,8 +209,38 @@
     </size>
    </property>
   </widget>
+  <widget class="QPushButton" name="m_cycleButton">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>240</y>
+     <width>51</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset resource="myplayer.qrc">
+     <normaloff>:/images/cycle.png</normaloff>:/images/cycle.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>20</width>
+     <height>20</height>
+    </size>
+   </property>
+  </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>PlayListWidget</class>
+   <extends>QListWidget</extends>
+   <header>playlistwidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="myplayer.qrc"/>
  </resources>

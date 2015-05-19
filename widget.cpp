@@ -1,5 +1,6 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include <QDebug>
 
 #define DEBUG
 
@@ -22,12 +23,13 @@ Widget::Widget(QWidget *parent) :
             this, SLOT(catchOutput()));
     connect(m_mplayerProcess, SIGNAL(finished(int,QProcess::ExitStatus)),
             this, SLOT(mplayerEnded(int, QProcess::ExitStatus)));
+    connect(ui->m_playlist, SIGNAL(dragEvent(int,int)), this, SLOT(handleDrag(int,int)));
     // 设置音量槽数值
     ui->m_volumeSlider->setMinimum(0);
     ui->m_volumeSlider->setMaximum(100);
     ui->m_volumeSlider->setValue(80);
 
-    curpos=-1;      // 当前播放的位置
+   playpos=-1;      // 当前播放的位置
     playmode=SEQUENCE;  // 默认为顺序播放
     nextfile = true;       // 结束时选择下一曲
     direction = DOWN;       // 默认向下播放
@@ -42,8 +44,9 @@ Widget::Widget(QWidget *parent) :
             m_filelist<<tmp;
         }
         qDebug("read playlist: len=%d", m_filelist.length());
-        if(m_filelist.length()!=0)
-            curpos=0;
+        if(m_filelist.length()!=0){
+            playpos=0;
+        }
         while(i<m_filelist.length()){
             addStr(m_filelist[i]);
             i++;
@@ -71,7 +74,10 @@ void Widget::on_m_playButton_clicked()
 {
     if(m_isplaying){
         pauseMPlayer();
-    }else if(curpos != -1){
+    }else if(m_filelist.length()!=0){           // 如果播放列表不为0
+        playpos = ui->m_playlist->currentRow();
+        if(playpos == -1)                              // currentRow会在未选中任何项返回-1，播放器第一次播放会出现这种情况，这时从第一首开始播放
+            playpos=0;
         startMPlayer();
     }else{
         on_m_openButton_clicked();
@@ -83,8 +89,9 @@ bool Widget::startMPlayer(int pos){
         return true;
     QStringList args;
     args.clear();
-    args << "-slave"<< "-quiet"<< m_filelist[curpos];
+    args << "-slave"<< "-quiet"<< m_filelist[playpos];
 
+    qDebug("startMPlayer, playpos=%d", playpos);
     m_mplayerProcess->setProcessChannelMode(QProcess::MergedChannels);          // 设置混合模式，使得播放器的进程的标准输出重定向到父进程的标准输出
     m_mplayerProcess->start(MPLAYER_PATH, args);
     if(!m_mplayerProcess->waitForStarted((3000))){
@@ -141,7 +148,7 @@ void Widget::mplayerEnded(int exitCode, QProcess::ExitStatus exitStatus){
     if(nextfile){       // 如果有意继续播放
         int nextpos = selectNext();
         if(nextpos != -1){
-            curpos = nextpos;
+            playpos = nextpos;
             startMPlayer();
          }
     }
@@ -157,7 +164,7 @@ void Widget::on_m_openButton_clicked()
         // 防止重复添加
         if(isDuplicating(path)) return;
         m_filelist << path;
-       curpos = m_filelist.length()-1;
+       playpos = m_filelist.length()-1;
        addStr(path);        // 将歌曲加入播放列表
     }
 }
@@ -174,14 +181,10 @@ void Widget::on_m_volumeSlider_valueChanged(int value)
     m_mplayerProcess->write(buf);
 }
 
-void Widget::on_m_playlist_currentRowChanged(int currentRow)
-{
-    curpos = currentRow;
-}
-
 void Widget::on_m_deleteButton_clicked()
 {
-    QListWidgetItem* pitem = ui->m_playlist->takeItem(curpos);
+    QListWidgetItem* pitem = ui->m_playlist->currentItem();
+    if(pitem == NULL) return;       // 未选中或者已为空
     QStringList list = m_filelist.filter(pitem->text());        // 返回包含text的字符串列表
     m_filelist.removeOne(list[0]);
     delete pitem;
@@ -204,6 +207,9 @@ void Widget::on_m_loopButton_clicked()
     case RANDOM:
         ui->m_randomButton->setIcon(QIcon(":/images/random.png"));
         /* fall through */
+    case CYCLE:
+        ui->m_cycleButton->setIcon(QIcon(":/images/cycle.png"));
+        /* fall through */
     case SEQUENCE:
         ui->m_loopButton->setIcon(QIcon(":/images/loop(valid).png"));
         playmode=LOOP;
@@ -221,6 +227,9 @@ void Widget::on_m_randomButton_clicked()
     case LOOP:
         ui->m_loopButton->setIcon(QIcon(":/images/loop.png"));
         /* fall through */
+    case CYCLE:
+        ui->m_cycleButton->setIcon(QIcon(":/images/cycle.png"));
+        /* fall through */
     case SEQUENCE:
         ui->m_randomButton->setIcon(QIcon(":/images/random(valid).png"));
         playmode=RANDOM;
@@ -234,10 +243,13 @@ void Widget::on_m_randomButton_clicked()
 
 // 根据播放模式选择下一曲
 int Widget::selectNext(){
-    int tmppos = curpos;
+    int tmppos = playpos;
     if(playmode==RANDOM){
         qsrand(time(NULL));
         tmppos = qrand() % m_filelist.length();
+        goto end;
+    }
+    if(playmode==CYCLE){
         goto end;
     }
     if(direction == DOWN){
@@ -264,6 +276,7 @@ end:
 
 void Widget::on_m_endButton_clicked()
 {
+    if(!m_isplaying) return;
     m_mplayerProcess->write("seek 99 1\n");
 }
 
@@ -282,4 +295,52 @@ void Widget::on_m_prevButton_clicked()
 {
     direction = UP;                                             // 在selNext自动切换为DOWN
     m_mplayerProcess->write("quit\n");
+}
+
+void Widget::handleDrag(int oldp, int newp){
+    if(newp == -1) return;                  // 移出边界
+    qDebug("handleDrag: playpos=%d, oldp=%d, newp=%d",  playpos, oldp, newp);
+
+    // 处理当前的播放位置
+    if(oldp == playpos){         // 选中当前播放歌曲
+        if(newp < playpos)
+            playpos = newp+1;
+        else
+            playpos = newp;
+    }else if(oldp < playpos){
+        if(newp >= playpos)
+            playpos--;
+    }else{
+        if(newp < playpos)
+            playpos++;
+    }
+
+    qDebug("after selection, playpos=%d", playpos);
+    if(oldp > newp)                         // 如果从下往上移动，按照已有逻辑，应该移到目的项的下方，所以newp需+1
+        m_filelist.move(oldp, newp+1);
+    else
+        m_filelist.move(oldp, newp);
+   // for(int i=0;i<m_filelist.length();i++){
+      //  qDebug()<<m_filelist[i];
+    //}
+}
+
+void Widget::on_m_cycleButton_clicked()
+{
+    switch(playmode){
+    case RANDOM:
+        ui->m_randomButton->setIcon(QIcon(":/images/random.png"));
+        /* fall through */
+    case LOOP:
+        ui->m_loopButton->setIcon(QIcon(":/images/loop.png"));
+        /* fall through */
+    case SEQUENCE:
+        ui->m_cycleButton->setIcon(QIcon(":/images/cycle(valid).png"));
+        playmode = CYCLE;
+        break;
+    case CYCLE:
+        ui->m_cycleButton->setIcon(QIcon(":/images/cycle.png"));
+        playmode = SEQUENCE;
+        break;
+    }
 }

@@ -17,5 +17,8 @@
         <file>images/random(valid).png</file>
         <file>images/next.png</file>
         <file>images/prev.png</file>
+        <file>images/person.png</file>
+        <file>images/cycle.png</file>
+        <file>images/cycle(valid).png</file>
     </qresource>
 </RCC>

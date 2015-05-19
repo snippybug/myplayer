@@ -13,9 +13,11 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        widget.cpp
+        widget.cpp \
+    playlistwidget.cpp
 
-HEADERS  += widget.h
+HEADERS  += widget.h \
+    playlistwidget.h
 
 FORMS    += widget.ui
 
