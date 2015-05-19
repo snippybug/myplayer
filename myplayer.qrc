@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/exit.png</file>
+        <file>images/folder.png</file>
+        <file>images/lcd.png</file>
+        <file>images/pause.png</file>
+        <file>images/play.png</file>
+        <file>images/playerlogo.png</file>
+        <file>images/stop.png</file>
+        <file>images/tv.png</file>
+        <file>images/tvoutmode.png</file>
+        <file>images/tvoutmode0.png</file>
+        <file>images/delete.png</file>
+        <file>images/loop.png</file>
+        <file>images/random.png</file>
+        <file>images/loop(valid).png</file>
+        <file>images/random(valid).png</file>
+        <file>images/next.png</file>
+        <file>images/prev.png</file>
+    </qresource>
+</RCC>
