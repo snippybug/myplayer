@@ -2,7 +2,7 @@
 #include "ui_widget.h"
 #include <QDebug>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
     #define MPLAYER_PATH "/usr/bin/mplayer"
@@ -24,6 +24,11 @@ Widget::Widget(QWidget *parent) :
     connect(m_mplayerProcess, SIGNAL(finished(int,QProcess::ExitStatus)),
             this, SLOT(mplayerEnded(int, QProcess::ExitStatus)));
     connect(ui->m_playlist, SIGNAL(dragEvent(int,int)), this, SLOT(handleDrag(int,int)));
+
+    m_timeTimer = new QTimer(this);
+    connect(m_timeTimer, SIGNAL(timeout()), this, SLOT(getTimepos()));
+    ui->m_playSlider->setEnabled(false);
+
     // 设置音量槽数值
     ui->m_volumeSlider->setMinimum(0);
     ui->m_volumeSlider->setMaximum(100);
@@ -105,6 +110,10 @@ bool Widget::startMPlayer(int pos){
 
     on_m_volumeSlider_valueChanged(ui->m_volumeSlider->sliderPosition());   // 获取当前音量值
     nextfile = true;
+
+    m_timeTimer->start(1000);
+    ui->m_playSlider->setEnabled(true);
+
     return true;
 }
 
@@ -116,8 +125,12 @@ bool Widget::pauseMPlayer(){
     m_ispause = !m_ispause;
     if (m_ispause) {
         ui->m_playButton->setIcon(QIcon(":/images/play.png"));
+        m_timeTimer->stop();
+        ui->m_playSlider->setEnabled(false);
     } else {
         ui->m_playButton->setIcon(QIcon(":/images/pause.png"));
+        m_timeTimer->start(1000);
+        ui->m_playSlider->setEnabled(true);
     }
 
     return true;
@@ -128,15 +141,45 @@ bool Widget::stopMPlayer(){
     if(!m_isplaying){
         return true;
     }
-    m_mplayerProcess->write("stop\n");
+    m_mplayerProcess->write("quit\n");
     nextfile = false;       // 正常退出，不用继续播放
     return true;
 }
 
 void Widget::catchOutput(){
+
+    char buf[10];
     while(m_mplayerProcess->canReadLine()){
         QByteArray buffer(m_mplayerProcess->readLine());
-        qDebug(buffer.data());
+        if(buffer.startsWith("ANS_LENGTH")){
+            buffer.remove(0, 11);           // 去掉ANS_LENGTH
+            buffer.replace(QByteArray("'"), QByteArray(""));
+            buffer.replace(QByteArray(" "), QByteArray(""));
+            buffer.replace(QByteArray("\n"), QByteArray(""));
+            buffer.replace(QByteArray("\r"), QByteArray(""));
+            float maxTime;
+            maxTime = buffer.toFloat();
+            ui->m_playSlider->setMaximum(maxTime);
+            sprintf(buf, "%02d:%02d",(int)maxTime/60, (int)maxTime%60);
+            ui->m_totalLabel->setText(buf);
+            qDebug(buffer.data());
+            qDebug("maxTime=%f", maxTime);
+        }else if(buffer.startsWith("ANS_TIME_POSITION")){
+            buffer.remove(0, 18);
+            buffer.replace(QByteArray("'"), QByteArray(""));
+            buffer.replace(QByteArray(" "), QByteArray(""));
+            buffer.replace(QByteArray("\n"), QByteArray(""));
+            buffer.replace(QByteArray("\r"), QByteArray(""));
+            float curtime;
+            curtime =  buffer.toFloat();
+            qDebug(buffer.data());
+            qDebug("curtime=%f", curtime);
+            ui->m_playSlider->setValue(curtime);
+            sprintf(buf, "%02d:%02d", (int)curtime/60, (int)curtime%60);
+            ui->m_curLabel->setText(buf);
+        }else{
+            qDebug(buffer.data());
+        }
     }
 }
 
@@ -159,6 +202,11 @@ void Widget::on_m_openButton_clicked()
 {
     QFileDialog *fileDialog = new QFileDialog(this);
     fileDialog->setWindowTitle("Open Media File");
+#ifndef DEBUG
+    fileDialog->setDirectory("/sdcard/music");
+    fileDialog->setFixedHeight(LCDHEIGHT);
+    fileDialog->setFixedWidth(LCDWIDTH);
+#endif
     if(fileDialog->exec() == QDialog::Accepted){
         QString path = fileDialog->selectedFiles()[0];
         // 防止重复添加
@@ -274,12 +322,6 @@ end:
     return tmppos;
 }
 
-void Widget::on_m_endButton_clicked()
-{
-    if(!m_isplaying) return;
-    m_mplayerProcess->write("seek 99 1\n");
-}
-
 void Widget::addStr(QString &path){
     QStringList splitList=path.split("/");       // 只取出文件名
      ui->m_playlist->addItem(splitList[splitList.length()-1]);    // 将曲目添加进播放列表
@@ -343,4 +385,9 @@ void Widget::on_m_cycleButton_clicked()
         playmode = SEQUENCE;
         break;
     }
+}
+
+void Widget::getTimepos(){
+    m_mplayerProcess->write("get_time_pos\n");
+    m_mplayerProcess->write("get_time_length\n");
 }

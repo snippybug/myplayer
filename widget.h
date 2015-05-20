@@ -4,6 +4,10 @@
 #include <QWidget>
 #include <QProcess>
 #include <QFileDialog>
+#include <QTimer>
+
+#define LCDWIDTH    480
+#define LCDHEIGHT   272
 
 namespace Ui {
 class Widget;
@@ -29,6 +33,7 @@ private slots:
     void catchOutput();
     void mplayerEnded(int exitCode, QProcess::ExitStatus exitStatus);
     void handleDrag(int oldp, int newp);
+    void getTimepos();
     void on_m_playButton_clicked();
 
     void on_m_openButton_clicked();
@@ -42,8 +47,6 @@ private slots:
     void on_m_loopButton_clicked();
 
     void on_m_randomButton_clicked();
-
-    void on_m_endButton_clicked();
 
     void on_m_nextButton_clicked();
 
@@ -63,6 +66,7 @@ private:
     QProcess *m_mplayerProcess;
 
     QStringList m_filelist;
+    QTimer *m_timeTimer;
 
     bool m_isplaying;
     bool m_ispause;
