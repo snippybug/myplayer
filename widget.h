@@ -30,6 +30,9 @@ public:
     ~Widget();
 
 private slots:
+    void receive_pos(double);
+    void on_m_playSlider_sliderReleased();
+    void on_m_playSlider_sliderPressed();
     void catchOutput();
     void mplayerEnded(int exitCode, QProcess::ExitStatus exitStatus);
     void handleDrag(int oldp, int newp);
@@ -53,7 +56,6 @@ private slots:
     void on_m_prevButton_clicked();
 
     void on_m_cycleButton_clicked();
-
 private:
     bool startMPlayer(int pos=0);
     bool pauseMPlayer();
@@ -74,6 +76,7 @@ private:
     int playpos;
     enum playMode playmode;
     enum Direction direction;
+    float maxTime;
 };
 
 

@@ -14,10 +14,12 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         widget.cpp \
-    playlistwidget.cpp
+    playlistwidget.cpp \
+    SliderPoint.cpp
 
 HEADERS  += widget.h \
-    playlistwidget.h
+    playlistwidget.h \
+    SliderPoint.h
 
 FORMS    += widget.ui
 

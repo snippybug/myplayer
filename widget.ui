@@ -230,7 +230,7 @@
     </size>
    </property>
   </widget>
-  <widget class="QSlider" name="m_playSlider">
+  <widget class="SliderPoint" name="m_playSlider">
    <property name="geometry">
     <rect>
      <x>42</x>
@@ -289,6 +289,11 @@
    <class>PlayListWidget</class>
    <extends>QListWidget</extends>
    <header>playlistwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SliderPoint</class>
+   <extends>QSlider</extends>
+   <header>SliderPoint.h</header>
   </customwidget>
  </customwidgets>
  <resources>

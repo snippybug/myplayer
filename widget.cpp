@@ -2,7 +2,7 @@
 #include "ui_widget.h"
 #include <QDebug>
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
     #define MPLAYER_PATH "/usr/bin/mplayer"
@@ -24,6 +24,8 @@ Widget::Widget(QWidget *parent) :
     connect(m_mplayerProcess, SIGNAL(finished(int,QProcess::ExitStatus)),
             this, SLOT(mplayerEnded(int, QProcess::ExitStatus)));
     connect(ui->m_playlist, SIGNAL(dragEvent(int,int)), this, SLOT(handleDrag(int,int)));
+
+    connect(ui->m_playSlider,SIGNAL(send_pos(double)),this,SLOT(receive_pos(double)));
 
     m_timeTimer = new QTimer(this);
     connect(m_timeTimer, SIGNAL(timeout()), this, SLOT(getTimepos()));
@@ -113,6 +115,7 @@ bool Widget::startMPlayer(int pos){
 
     m_timeTimer->start(1000);
     ui->m_playSlider->setEnabled(true);
+    ui->m_playlist->setCurrentRow(playpos);         //  默认选中当前播放曲目
 
     return true;
 }
@@ -126,7 +129,6 @@ bool Widget::pauseMPlayer(){
     if (m_ispause) {
         ui->m_playButton->setIcon(QIcon(":/images/play.png"));
         m_timeTimer->stop();
-        ui->m_playSlider->setEnabled(false);
     } else {
         ui->m_playButton->setIcon(QIcon(":/images/pause.png"));
         m_timeTimer->start(1000);
@@ -143,6 +145,12 @@ bool Widget::stopMPlayer(){
     }
     m_mplayerProcess->write("quit\n");
     nextfile = false;       // 正常退出，不用继续播放
+    char buf[20];
+    int p=0;
+    sprintf(buf, "%02d:%02d", (int)p/60, (int)p%60);
+    ui->m_curLabel->setText(buf);
+    ui->m_totalLabel->setText(buf);
+    ui->m_playSlider->setValue(0);
     return true;
 }
 
@@ -157,7 +165,6 @@ void Widget::catchOutput(){
             buffer.replace(QByteArray(" "), QByteArray(""));
             buffer.replace(QByteArray("\n"), QByteArray(""));
             buffer.replace(QByteArray("\r"), QByteArray(""));
-            float maxTime;
             maxTime = buffer.toFloat();
             ui->m_playSlider->setMaximum(maxTime);
             sprintf(buf, "%02d:%02d",(int)maxTime/60, (int)maxTime%60);
@@ -390,4 +397,31 @@ void Widget::on_m_cycleButton_clicked()
 void Widget::getTimepos(){
     m_mplayerProcess->write("get_time_pos\n");
     m_mplayerProcess->write("get_time_length\n");
+}
+
+void Widget::on_m_playSlider_sliderPressed()
+{
+    if(m_isplaying) {
+        m_timeTimer->stop();
+    }
+}
+
+void Widget::on_m_playSlider_sliderReleased()
+{
+        m_mplayerProcess->write(QString("seek " + QString::number(ui->m_playSlider->value()) + " 2\n").toUtf8());
+        m_timeTimer->start(1000);
+}
+void Widget::receive_pos(double pos)
+{
+    double p=pos/241*maxTime;
+    char buf[20];
+    ui->m_playSlider->setValue(p);
+   if(m_ispause){
+        m_ispause = 0;
+        ui->m_playButton->setIcon(QIcon(":/images/pause.png"));
+    }
+   qDebug("receive_pos: Here???  p=%e, maxTime=%f", pos, maxTime);
+    m_mplayerProcess->write(QString("seek " + QString::number(ui->m_playSlider->value()) + " 2\n").toUtf8());
+    sprintf(buf, "%02d:%02d", (int)p/60, (int)p%60);
+    ui->m_curLabel->setText(buf);
 }
