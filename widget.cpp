@@ -50,7 +50,6 @@ Widget::Widget(QWidget *parent) :
         if(in.status()==QDataStream::Ok){
             m_filelist<<tmp;
         }
-        qDebug("read playlist: len=%d", m_filelist.length());
         if(m_filelist.length()!=0){
             playpos=0;
         }
@@ -65,7 +64,6 @@ Widget::Widget(QWidget *parent) :
 
 Widget::~Widget()
 {
-    qDebug("~Widget: m_filelist.length()=%d", m_filelist.length());
     if(m_filelist.length()!=0){     // 将播放列表写回文件
         QFile list(LISTPATH);
         if(list.open(QIODevice::WriteOnly)){
@@ -98,11 +96,9 @@ bool Widget::startMPlayer(int pos){
     args.clear();
     args << "-slave"<< "-quiet"<< m_filelist[playpos];
 
-    qDebug("startMPlayer, playpos=%d", playpos);
     m_mplayerProcess->setProcessChannelMode(QProcess::MergedChannels);          // 设置混合模式，使得播放器的进程的标准输出重定向到父进程的标准输出
     m_mplayerProcess->start(MPLAYER_PATH, args);
     if(!m_mplayerProcess->waitForStarted((3000))){
-        qDebug("startMplayer failed");
         return false;
     }
 
@@ -139,7 +135,6 @@ bool Widget::pauseMPlayer(){
 }
 
 bool Widget::stopMPlayer(){
-    qDebug("Enter stopMplayer, m_isplaying=%d", m_isplaying);
     if(!m_isplaying){
         return true;
     }
@@ -169,8 +164,6 @@ void Widget::catchOutput(){
             ui->m_playSlider->setMaximum(maxTime);
             sprintf(buf, "%02d:%02d",(int)maxTime/60, (int)maxTime%60);
             ui->m_totalLabel->setText(buf);
-            qDebug(buffer.data());
-            qDebug("maxTime=%f", maxTime);
         }else if(buffer.startsWith("ANS_TIME_POSITION")){
             buffer.remove(0, 18);
             buffer.replace(QByteArray("'"), QByteArray(""));
@@ -179,19 +172,15 @@ void Widget::catchOutput(){
             buffer.replace(QByteArray("\r"), QByteArray(""));
             float curtime;
             curtime =  buffer.toFloat();
-            qDebug(buffer.data());
-            qDebug("curtime=%f", curtime);
             ui->m_playSlider->setValue(curtime);
             sprintf(buf, "%02d:%02d", (int)curtime/60, (int)curtime%60);
             ui->m_curLabel->setText(buf);
         }else{
-            qDebug(buffer.data());
         }
     }
 }
 
 void Widget::mplayerEnded(int exitCode, QProcess::ExitStatus exitStatus){
-    qDebug("enter mplayerEnded, exitCode=%d, exitStatus=%d", exitCode, exitStatus);
     m_isplaying = false;
     m_ispause = false;
     ui->m_playButton->setIcon(QIcon(":/images/play.png"));
@@ -325,7 +314,6 @@ int Widget::selectNext(){
     }
 
 end:
-    qDebug("selectPos: nextPos=%d", tmppos);
     return tmppos;
 }
 
@@ -348,7 +336,6 @@ void Widget::on_m_prevButton_clicked()
 
 void Widget::handleDrag(int oldp, int newp){
     if(newp == -1) return;                  // 移出边界
-    qDebug("handleDrag: playpos=%d, oldp=%d, newp=%d",  playpos, oldp, newp);
 
     // 处理当前的播放位置
     if(oldp == playpos){         // 选中当前播放歌曲
@@ -364,13 +351,11 @@ void Widget::handleDrag(int oldp, int newp){
             playpos++;
     }
 
-    qDebug("after selection, playpos=%d", playpos);
     if(oldp > newp)                         // 如果从下往上移动，按照已有逻辑，应该移到目的项的下方，所以newp需+1
         m_filelist.move(oldp, newp+1);
     else
         m_filelist.move(oldp, newp);
    // for(int i=0;i<m_filelist.length();i++){
-      //  qDebug()<<m_filelist[i];
     //}
 }
 
@@ -420,7 +405,6 @@ void Widget::receive_pos(double pos)
         m_ispause = 0;
         ui->m_playButton->setIcon(QIcon(":/images/pause.png"));
     }
-   qDebug("receive_pos: Here???  p=%e, maxTime=%f", pos, maxTime);
     m_mplayerProcess->write(QString("seek " + QString::number(ui->m_playSlider->value()) + " 2\n").toUtf8());
     sprintf(buf, "%02d:%02d", (int)p/60, (int)p%60);
     ui->m_curLabel->setText(buf);
