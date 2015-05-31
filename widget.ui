@@ -29,6 +29,12 @@
     <iconset resource="myplayer.qrc">
      <normaloff>:/images/play.png</normaloff>:/images/play.png</iconset>
    </property>
+   <property name="iconSize">
+    <size>
+     <width>23</width>
+     <height>23</height>
+    </size>
+   </property>
   </widget>
   <widget class="QPushButton" name="m_openButton">
    <property name="geometry">
@@ -46,6 +52,12 @@
     <iconset resource="myplayer.qrc">
      <normaloff>:/images/folder.png</normaloff>:/images/folder.png</iconset>
    </property>
+   <property name="iconSize">
+    <size>
+     <width>23</width>
+     <height>23</height>
+    </size>
+   </property>
   </widget>
   <widget class="QPushButton" name="m_stopButton">
    <property name="geometry">
@@ -62,6 +74,12 @@
    <property name="icon">
     <iconset resource="myplayer.qrc">
      <normaloff>:/images/stop.png</normaloff>:/images/stop.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>23</width>
+     <height>23</height>
+    </size>
    </property>
   </widget>
   <widget class="QSlider" name="m_volumeSlider">
@@ -111,7 +129,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
+     <pointsize>35</pointsize>
     </font>
    </property>
   </widget>
@@ -252,6 +270,11 @@
      <height>41</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>20</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>00:00</string>
    </property>
@@ -265,6 +288,11 @@
      <height>41</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>20</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>00:00</string>
    </property>
@@ -272,11 +300,16 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>330</x>
+     <x>334</x>
      <y>203</y>
      <width>16</width>
      <height>41</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>20</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>/</string>

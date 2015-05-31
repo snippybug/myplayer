@@ -2,7 +2,7 @@
 #include "ui_widget.h"
 #include <QDebug>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
     #define MPLAYER_PATH "/usr/bin/mplayer"
@@ -200,7 +200,12 @@ void Widget::on_m_openButton_clicked()
     fileDialog->setWindowTitle("Open Media File");
 #ifndef DEBUG
     fileDialog->setDirectory("/sdcard/music");
-    fileDialog->setFixedHeight(LCDHEIGHT);
+
+    QFont font=fileDialog->font();
+    font.setPixelSize(25);
+    fileDialog->setFont(font);
+
+    fileDialog->setFixedHeight(LCDHEIGHT-25);
     fileDialog->setFixedWidth(LCDWIDTH);
 #endif
     if(fileDialog->exec() == QDialog::Accepted){
