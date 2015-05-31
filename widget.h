@@ -56,6 +56,8 @@ private slots:
     void on_m_prevButton_clicked();
 
     void on_m_cycleButton_clicked();
+    void on_m_playlist_doubleClicked(const QModelIndex &index);
+
 private:
     bool startMPlayer(int pos=0);
     bool pauseMPlayer();

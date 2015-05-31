@@ -355,8 +355,6 @@ void Widget::handleDrag(int oldp, int newp){
         m_filelist.move(oldp, newp+1);
     else
         m_filelist.move(oldp, newp);
-   // for(int i=0;i<m_filelist.length();i++){
-    //}
 }
 
 void Widget::on_m_cycleButton_clicked()
@@ -408,4 +406,18 @@ void Widget::receive_pos(double pos)
     m_mplayerProcess->write(QString("seek " + QString::number(ui->m_playSlider->value()) + " 2\n").toUtf8());
     sprintf(buf, "%02d:%02d", (int)p/60, (int)p%60);
     ui->m_curLabel->setText(buf);
+}
+
+void Widget::on_m_playlist_doubleClicked(const QModelIndex &index)
+{
+    int clickpos;
+    clickpos = index.row();
+    if(playpos == clickpos){
+        on_m_playButton_clicked();
+    }else{
+        on_m_stopButton_clicked();
+        m_mplayerProcess->waitForFinished();        // 防止进程还未结束时点击按钮
+        playpos = clickpos;
+        on_m_playButton_clicked();
+    }
 }
